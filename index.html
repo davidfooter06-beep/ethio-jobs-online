@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethio-Online-Job | The Premium Freelance Network</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* ==========================================================================
+           GLOBAL VARIABLES & RESET
+           ========================================================================== */
+        :root {
+            --fiverr-green: #1dbf73; --fiverr-dark: #19a463; --dark-bg: #0b0e14;
+            --text-dark: #222325; --text-light: #62646a; --bg-gray: #f7f7f7;
+            --white: #ffffff; --danger: #ef4444; --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        body { background: var(--bg-gray); color: var(--text-dark); overflow-x: hidden; }
+
+        /* ==========================================================================
+           VIDEO BACKGROUND & HERO
+           ========================================================================== */
+        .hero-wrap { position: relative; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .hero-video { position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%; transform: translate(-50%, -50%); z-index: -2; object-fit: cover; filter: brightness(0.4); }
+        .hero-content { z-index: 10; text-align: center; color: var(--white); max-width: 800px; padding: 20px; }
+        .hero-content h1 { font-size: 3.5rem; margin-bottom: 20px; font-weight: 700; }
+        .hero-content p { font-size: 1.2rem; margin-bottom: 30px; }
+
+        /* ==========================================================================
+           HEADER & NAVIGATION (BIG LOGO)
+           ========================================================================== */
+        header { position: fixed; top: 0; width: 100%; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transition: background 0.3s; }
+        header.scrolled { background: var(--white); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        header.scrolled .nav-link { color: var(--text-dark); }
+        .logo img { height: 90px; width: auto; object-fit: contain; cursor: pointer; transition: 0.3s; } /* Big Logo */
+        .nav-menu { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: var(--white); text-decoration: none; font-weight: 600; cursor: pointer; transition: 0.2s; background: none; border: none; font-size: 16px; }
+        .nav-link:hover { color: var(--fiverr-green); }
+        .btn-primary { background: var(--fiverr-green); color: var(--white); padding: 10px 25px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-primary:hover { background: var(--fiverr-dark); }
+
+        /* ==========================================================================
+           AUTH & LOGIN MODAL (WITH LOGIN-BG)
+           ========================================================================== */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .auth-card { background: url('login-bg.jpg') center/cover; width: 900px; height: 500px; border-radius: 12px; display: flex; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+        .auth-left { flex: 1; background: rgba(29, 191, 115, 0.85); color: white; padding: 50px; display: flex; flex-direction: column; justify-content: center; }
+        .auth-right { flex: 1; background: var(--white); padding: 50px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; border: 1px solid #ddd; padding: 15px; border-radius: 8px; background: white; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .google-btn:hover { background: #f9f9f9; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        /* ==========================================================================
+           UPWORK/FIVERR 100% PROFILE WIZARD
+           ========================================================================== */
+        .wizard-container { display: none; position: fixed; inset: 0; background: var(--bg-gray); z-index: 3000; overflow-y: auto; padding: 40px 20px; }
+        .wizard-card { background: var(--white); max-width: 800px; margin: 0 auto; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); padding: 40px; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .progress-track { width: 100%; height: 12px; background: #e4e5e7; border-radius: 6px; overflow: hidden; margin-bottom: 40px; }
+        .progress-fill { height: 100%; background: var(--fiverr-green); width: 0%; transition: width 0.5s ease; }
+        .wizard-step { display: none; animation: fadeIn 0.4s; }
+        .wizard-step.active { display: block; }
+        .input-group { margin-bottom: 25px; text-align: left; }
+        .input-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark); }
+        .wizard-input { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; transition: border 0.3s; }
+        .wizard-input:focus { border-color: var(--fiverr-green); outline: none; }
+        .wizard-textarea { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; min-height: 120px; resize: vertical; }
+
+        /* ==========================================================================
+           DASHBOARD & GIG GRID
+           ========================================================================== */
+        .dashboard { display: none; padding: 120px 50px 50px; max-width: 1400px; margin: 0 auto; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .gig-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+        .gig-card { background: var(--white); border: 1px solid #e4e5e7; border-radius: 8px; overflow: hidden; transition: 0.3s; position: relative; cursor: pointer; }
+        .gig-card:hover { transform: translateY(-5px); box-shadow: 0 15px 25px rgba(0,0,0,0.1); }
+        .gig-img { width: 100%; height: 200px; object-fit: cover; background: #eee; }
+        .gig-info { padding: 20px; }
+        .seller-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .seller-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--fiverr-green); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .gig-title { font-size: 16px; line-height: 1.4; margin-bottom: 15px; color: var(--text-dark); }
+        .gig-footer { border-top: 1px solid #e4e5e7; padding-top: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .gig-price { font-weight: bold; font-size: 18px; color: var(--text-dark); }
+        .report-icon { color: var(--danger); cursor: pointer; font-size: 14px; }
+
+        /* ==========================================================================
+           MODALS (POST GIG & REPORT)
+           ========================================================================== */
+        .action-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 4000; align-items: center; justify-content: center; }
+        .modal-content { background: var(--white); width: 600px; padding: 40px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { margin-bottom: 20px; }
+        .close-btn { float: right; cursor: pointer; font-size: 24px; color: var(--text-light); }
+        .telegram-btn { background: #0088cc; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 10px; width: 100%; justify-content: center; margin-top: 15px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <header id="main-header">
+        <div class="logo">
+            <img src="ethio-logo.png" alt="Ethio-Online-Job" onerror="this.src='https://via.placeholder.com/150x50?text=Ethio-Online'">
+        </div>
+        <div class="nav-menu">
+            <button class="nav-link" id="langToggle" onclick="toggleLanguage()">አማርኛ / English</button>
+            <button class="nav-link t-explore" onclick="scrollToGigs()">Explore</button>
+            <button class="btn-primary t-login" id="authBtn" onclick="openAuth()">Sign In</button>
+            <div id="userMenu" style="display:none; align-items:center; gap:15px;">
+                <span id="userNameDisplay" style="font-weight:bold; color:var(--fiverr-green);"></span>
+                <button class="btn-primary t-post" onclick="openPostGig()">Post Gig/Job</button>
+                <button class="nav-link" onclick="logout()" style="color:var(--danger)">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero-wrap" id="hero-section">
+        <video autoplay muted loop class="hero-video">
+            <source src="bg-video.mp4" type="video/mp4">
+        </video>
+        <div class="hero-content">
+            <h1 class="t-h1">Find the perfect freelance services for your business</h1>
+            <p class="t-p1">Work with the best Ethiopian talent, securely and professionally.</p>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <input type="text" placeholder="Try 'Logo Design' or 'Translation'" style="padding:15px; width:400px; border-radius:4px; border:none; font-size:16px;">
+                <button class="btn-primary" style="padding:15px 30px; font-size:16px;">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="authModal">
+        <div class="auth-card">
+            <div class="auth-left">
+                <h2 class="t-auth-title" style="font-size:32px; margin-bottom:20px;">Success Starts Here</h2>
+                <p class="t-auth-sub">Join the largest professional network in Ethiopia. Connect with clients, build your portfolio, and grow your income.</p>
+            </div>
+            <div class="auth-right">
+                <h2 class="t-welcome-back" style="margin-bottom:30px; color:var(--text-dark);">Welcome to Ethio-Online</h2>
+                <button class="google-btn" onclick="signInWithGoogle()">
+                    <img src="google-logo.png" width="24" alt="G" onerror="this.style.display='none'"> 
+                    <span class="t-google">Continue with Google</span>
+                </button>
+                <p style="margin-top:20px; font-size:12px; color:var(--text-light);">By joining, you agree to our Terms of Service.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="wizard-container" id="profileWizard">
+        <div class="wizard-card">
+            <div class="progress-header">
+                <h2 class="t-wiz-title">Complete Your Profile</h2>
+                <span id="prof-percent" style="font-weight:bold; color:var(--fiverr-green); font-size:24px;">0%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="wizard-progress"></div></div>
+
+            <div class="wizard-step active" id="step1">
+                <h3>1. Personal Information</h3>
+                <div class="input-group" style="margin-top:20px;">
+                    <label>Full Name</label>
+                    <input type="text" id="w-name" class="wizard-input" placeholder="e.g. Abebe Kebede" oninput="updateProgress()">
+                </div>
+                <div class="input-group">
+                    <label>Account Type</label>
+                    <select id="w-type" class="wizard-input" onchange="updateProgress()">
+                        <option value="">Select an option...</option>
+                        <option value="seller">Freelancer / Gig Seller</option>
+                        <option value="buyer">Client / Hiring Company</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="nextStep(2)">Next Step</button>
+            </div>
+
+            <div class="wizard-step" id="step2">
+                <h3>2. Professional Details</h3>
+                <div class="input-group" style="margin-top:20px;">
+                    <label>Professional Title</label>
+                    <input type="text" id="w-title" class="wizard-input" placeholder="e.g. Senior Frontend Developer" oninput="updateProgress()">
+                </div>
+                <div class="input-group">
+                    <label>Bio / Description</label>
+                    <textarea id="w-bio" class="wizard-textarea" placeholder="Tell clients about your expertise..." oninput="updateProgress()"></textarea>
+                </div>
+                <button class="btn-primary" style="background:#ccc; color:#333;" onclick="nextStep(1)">Back</button>
+                <button class="btn-primary" onclick="nextStep(3)">Next Step</button>
+            </div>
+
+            <div class="wizard-step" id="step3">
+                <h3>3. Verification & Contact</h3>
+                <div class="input-group" style="margin-top:20px;">
+                    <label>Telegram Username (Crucial for communication)</label>
+                    <input type="text" id="w-telegram" class="wizard-input" placeholder="e.g. @Abebe123" oninput="updateProgress()">
+                </div>
+                <div class="input-group">
+                    <label>Profile Avatar / Banner</label>
+                    <input type="file" id="w-avatar" class="wizard-input" accept="image/*" onchange="updateProgress()">
+                </div>
+                <button class="btn-primary" style="background:#ccc; color:#333;" onclick="nextStep(2)">Back</button>
+                <button class="btn-primary" id="btn-finish-prof" onclick="finishProfile()" disabled>Complete Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="dashboard" id="mainDashboard">
+        <div class="dash-header">
+            <h2 class="t-dash-title">Explore Professional Gigs</h2>
+        </div>
+        <div class="gig-grid" id="gigList">
+            </div>
+    </main>
+
+    <div class="action-modal" id="postGigModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('postGigModal')">&times;</span>
+            <h2 class="t-post-gig">Create a New Gig</h2>
+            
+            <div class="input-group">
+                <label>Gig Title</label>
+                <input type="text" id="g-title" class="wizard-input" placeholder="I will design a modern logo for...">
+            </div>
+            <div class="input-group">
+                <label>Description</label>
+                <textarea id="g-desc" class="wizard-textarea" placeholder="Describe what you offer..."></textarea>
+            </div>
+            <div class="input-group">
+                <label>Price (ETB)</label>
+                <input type="number" id="g-price" class="wizard-input" placeholder="e.g. 1500">
+            </div>
+            <div class="input-group">
+                <label>Gig Background Image (Proof of work)</label>
+                <input type="file" id="g-image" class="wizard-input" accept="image/*">
+            </div>
+            
+            <div style="background:#f9fafb; padding:15px; border-radius:6px; margin-bottom:20px; border:1px solid #e4e5e7;">
+                <p style="font-weight:bold; margin-bottom:10px;">Posting Fee: <span id="feeDisplay">150 ETB</span></p>
+                <p style="font-size:14px; margin-bottom:10px;">Please transfer the fee to the Admin Telebirr account below, then submit your gig for approval.</p>
+                <p><strong>Admin Name: </strong><span id="adminTbName">Loading...</span></p>
+                <p><strong>Telebirr Phone: </strong><span id="adminTbPhone">Loading...</span></p>
+                <img src="telebirr-logo.png" width="80" style="margin-top:10px;" onerror="this.style.display='none'">
+            </div>
+
+            <button class="btn-primary" style="width:100%;" onclick="submitGig()">Submit for Admin Approval</button>
+        </div>
+    </div>
+
+    <div class="action-modal" id="reportModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('reportModal')">&times;</span>
+            <h2 style="color:var(--danger);">Report User / Scam</h2>
+            <p style="margin-bottom:15px; color:var(--text-light);">We take fraud seriously. Provide details up to 5000 characters.</p>
+            <input type="hidden" id="report-target-uid">
+            <div class="input-group">
+                <label>Reason for Report</label>
+                <textarea id="r-text" class="wizard-textarea" maxlength="5000" placeholder="Describe the scam or issue in detail..."></textarea>
+                <small id="char-count">0 / 5000</small>
+            </div>
+            <button class="btn-primary" style="background:var(--danger); width:100%;" onclick="submitReport()">Submit Report to Admin</button>
+        </div>
+    </div>
+
+    <div class="action-modal" id="viewGigModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('viewGigModal')">&times;</span>
+            <img id="v-img" style="width:100%; height:250px; object-fit:cover; border-radius:8px; margin-bottom:20px;">
+            <h2 id="v-title">Loading...</h2>
+            <p id="v-desc" style="margin: 15px 0; color:var(--text-light); line-height:1.6;"></p>
+            <h3 style="color:var(--fiverr-green); margin-bottom:20px;">Price: <span id="v-price"></span> ETB</h3>
+            <hr style="border:0; border-top:1px solid #eee; margin-bottom:20px;">
+            <button class="telegram-btn" id="v-telegram-btn">
+                <img src="telegram-logo.png" width="20" onerror="this.style.display='none'"> 
+                Contact Seller via Telegram
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 1. FIREBASE CONFIGURATION (FIXED & COMPLETE)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxmQDA0gjmG9IAjcvszQcRbYlcB1EdA7k",
+            authDomain: "ethio-jobs-online.firebaseapp.com",
+            databaseURL: "https://ethio-jobs-online-default-rtdb.firebaseio.com", // CRUCIAL FIX
+            projectId: "ethio-jobs-online",
+            storageBucket: "ethio-jobs-online.firebasestorage.app",
+            messagingSenderId: "706946724029",
+            appId: "1:706946724029:web:77595803c7031c0dee07d4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let currentUser = null;
+        let globalSettings = {};
+
+        // 2. TRANSLATION ENGINE
+        let isAmharic = false;
+        const dict = {
+            "t-explore": ["Explore", "ዳስስ"], "t-login": ["Sign In", "ይግቡ"], "t-post": ["Post Gig", "ስራ ይለጥፉ"],
+            "t-h1": ["Find the perfect freelance services for your business", "ለንግድዎ ትክክለኛውን የፍሪላንስ አገልግሎት ያግኙ"],
+            "t-p1": ["Work with the best Ethiopian talent, securely and professionally.", "ከምርጥ የኢትዮጵያ ባለሙያዎች ጋር ደህንነቱ በተጠበቀ ሁኔታ ይስሩ።"],
+            "t-auth-title": ["Success Starts Here", "ስኬት እዚህ ይጀምራል"], "t-auth-sub": ["Join the largest professional network in Ethiopia.", "በኢትዮጵያ ትልቁን የባለሙያዎች አውታረ መረብ ይቀላቀሉ።"],
+            "t-welcome-back": ["Welcome to Ethio-Online", "እንኳን ደህና መጡ"], "t-google": ["Continue with Google", "በ Google ይቀጥሉ"],
+            "t-wiz-title": ["Complete Your Profile", "መገለጫዎን ያጠናቅቁ"], "t-dash-title": ["Explore Professional Gigs", "የባለሙያ ስራዎችን ያስሱ"],
+            "t-post-gig": ["Create a New Gig", "አዲስ ስራ ይፍጠሩ"]
+        };
+
+        function toggleLanguage() {
+            isAmharic = !isAmharic;
+            const idx = isAmharic ? 1 : 0;
+            for(const key in dict) {
+                const el = document.querySelector('.' + key);
+                if(el) el.innerText = dict[key][idx];
+            }
+        }
+
+        // 3. AUTHENTICATION & UI STATE
+        function openAuth() { document.getElementById('authModal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).then((result) => {
+                closeModal('authModal');
+                checkUserStatus(result.user);
+            }).catch((error) => {
+                Swal.fire('Login Failed', 'Please try again.', 'error');
+            });
+        }
+
+        function logout() { auth.signOut().then(() => location.reload()); }
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                checkUserStatus(user);
+            } else {
+                document.getElementById('authBtn').style.display = 'block';
+                document.getElementById('userMenu').style.display = 'none';
+            }
+        });
+
+        function checkUserStatus(user) {
+            db.ref('users/' + user.uid).once('value', snap => {
+                const data = snap.val();
+                if (data && data.banned) {
+                    Swal.fire({ icon: 'error', title: 'Banned', text: 'Your account has been banned by the Administrator.', showConfirmButton: false });
+                    auth.signOut();
+                    return;
+                }
+                if (data && data.profile_completed === 100) {
+                    // Profile is 100%, show Dashboard
+                    document.getElementById('authBtn').style.display = 'none';
+                    document.getElementById('userMenu').style.display = 'flex';
+                    document.getElementById('userNameDisplay').innerText = data.name;
+                    document.getElementById('hero-section').style.display = 'none';
+                    document.getElementById('mainDashboard').style.display = 'block';
+                    document.getElementById('main-header').classList.add('scrolled');
+                    loadGigs();
+                } else {
+                    // Start 100% Profile Wizard
+                    document.getElementById('hero-section').style.display = 'none';
+                    document.getElementById('profileWizard').style.display = 'block';
+                }
+            });
+        }
+
+        // 4. 100% PROFILE WIZARD LOGIC
+        function nextStep(step) {
+            document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+        }
+
+        function updateProgress() {
+            const fields = ['w-name', 'w-type', 'w-title', 'w-bio', 'w-telegram', 'w-avatar'];
+            let filled = 0;
+            fields.forEach(id => {
+                const val = document.getElementById(id).value;
+                if(val && val.trim() !== '') filled++;
+            });
+            const percent = Math.round((filled / fields.length) * 100);
+            document.getElementById('prof-percent').innerText = percent + '%';
+            document.getElementById('wizard-progress').style.width = percent + '%';
+            
+            if(percent === 100) {
+                document.getElementById('btn-finish-prof').disabled = false;
+                document.getElementById('btn-finish-prof').style.background = 'var(--fiverr-green)';
+            } else {
+                document.getElementById('btn-finish-prof').disabled = true;
+                document.getElementById('btn-finish-prof').style.background = '#ccc';
+            }
+        }
+
+        function finishProfile() {
+            const fileInput = document.getElementById('w-avatar');
+            const file = fileInput.files[0];
+            
+            // Convert Avatar to Base64 for DB storage (avoids complex Storage Rules)
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const userData = {
+                    name: document.getElementById('w-name').value,
+                    type: document.getElementById('w-type').value,
+                    title: document.getElementById('w-title').value,
+                    bio: document.getElementById('w-bio').value,
+                    telegram: document.getElementById('w-telegram').value,
+                    avatar: e.target.result,
+                    profile_completed: 100,
+                    joinedAt: Date.now()
+                };
+                db.ref('users/' + currentUser.uid).set(userData).then(() => {
+                    Swal.fire('Success!', 'Profile setup complete.', 'success').then(() => location.reload());
+                });
+            };
+            if(file) reader.readAsDataURL(file);
+        }
+
+        // 5. GIG LOGIC & UPLOADS
+        // Fetch Admin Settings for Telebirr info
+        db.ref('settings').on('value', snap => {
+            if(snap.exists()) {
+                globalSettings = snap.val();
+                document.getElementById('adminTbName').innerText = globalSettings.adminName || "Admin";
+                document.getElementById('adminTbPhone').innerText = globalSettings.adminPhone || "Not Set";
+                document.getElementById('feeDisplay').innerText = globalSettings.individualFee + " ETB";
+            }
+        });
+
+        function openPostGig() { document.getElementById('postGigModal').style.display = 'flex'; }
+
+        function submitGig() {
+            const title = document.getElementById('g-title').value;
+            const desc = document.getElementById('g-desc').value;
+            const price = document.getElementById('g-price').value;
+            const file = document.getElementById('g-image').files[0];
+
+            if(!title || !desc || !price || !file) return Swal.fire('Error', 'Please fill all fields and upload a gig background.', 'error');
+
+            Swal.fire({ title: 'Uploading...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const gigData = {
+                    sellerUid: currentUser.uid,
+                    title: title,
+                    desc: desc,
+                    price: price,
+                    image: e.target.result,
+                    status: 'pending', // Needs Admin Approval
+                    timestamp: Date.now()
+                };
+                db.ref('pending_gigs').push(gigData).then(() => {
+                    closeModal('postGigModal');
+                    Swal.fire('Submitted!', 'Your gig has been sent to the Admin for approval after verifying your payment.', 'success');
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 6. LOAD ACTIVE GIGS
+        function loadGigs() {
+            db.ref('active_gigs').on('value', snap => {
+                const grid = document.getElementById('gigList');
+                grid.innerHTML = '';
+                snap.forEach(child => {
+                    const gig = child.val();
+                    // Fetch Seller info
+                    db.ref('users/' + gig.sellerUid).once('value').then(userSnap => {
+                        const seller = userSnap.val();
+                        if(!seller) return;
+                        
+                        const card = document.createElement('div');
+                        card.className = 'gig-card';
+                        card.innerHTML = `
+                            <img src="${gig.image}" class="gig-img">
+                            <div class="gig-info">
+                                <div class="seller-info">
+                                    <div class="seller-avatar"><img src="${seller.avatar}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                                    <strong>${seller.name}</strong> 
+                                    <span style="color:#f59e0b; margin-left:auto;">★ 5.0</span>
+                                </div>
+                                <h3 class="gig-title" onclick="openGigView('${child.key}')">${gig.title}</h3>
+                                <div class="gig-footer">
+                                    <div class="report-icon" onclick="openReport('${seller.name}', '${gig.sellerUid}')">🚩 Report User</div>
+                                    <div class="gig-price">ETB ${gig.price}</div>
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                });
+            });
+        }
+
+        // 7. TELEGRAM CONNECTION & VIEW GIG
+        window.openGigView = (gigId) => {
+            db.ref('active_gigs/' + gigId).once('value').then(snap => {
+                const gig = snap.val();
+                document.getElementById('v-title').innerText = gig.title;
+                document.getElementById('v-desc').innerText = gig.desc;
+                document.getElementById('v-price').innerText = gig.price;
+                document.getElementById('v-img').src = gig.image;
+                
+                // Get Seller Telegram
+                db.ref('users/' + gig.sellerUid).once('value').then(uSnap => {
+                    const seller = uSnap.val();
+                    const tgBtn = document.getElementById('v-telegram-btn');
+                    tgBtn.onclick = () => {
+                        const tgUser = seller.telegram.replace('@', '');
+                        window.open(`https://t.me/${tgUser}`, '_blank');
+                    };
+                    document.getElementById('viewGigModal').style.display = 'flex';
+                });
+            });
+        };
+
+        // 8. REPORT SYSTEM (5000 Chars limit)
+        document.getElementById('r-text').addEventListener('input', function() {
+            document.getElementById('char-count').innerText = this.value.length + " / 5000";
+        });
+
+        window.openReport = (sellerName, sellerUid) => {
+            document.getElementById('report-target-uid').value = sellerUid;
+            document.getElementById('reportModal').style.display = 'flex';
+        };
+
+        function submitReport() {
+            const text = document.getElementById('r-text').value;
+            const targetUid = document.getElementById('report-target-uid').value;
+            if(text.length < 10) return Swal.fire('Error', 'Please provide more details.', 'error');
+
+            db.ref('reports').push({
+                reporterUid: currentUser.uid,
+                targetUid: targetUid,
+                message: text,
+                timestamp: Date.now(),
+                status: 'unread'
+            }).then(() => {
+                closeModal('reportModal');
+                Swal.fire('Report Sent', 'Admin will review this immediately.', 'success');
+                document.getElementById('r-text').value = '';
+            });
+        }
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 50) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        });
+    </script>
+</body>
+</html>
