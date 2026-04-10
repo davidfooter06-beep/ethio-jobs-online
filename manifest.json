@@ -1,20 +1,19 @@
 {
   "name": "Ethio-Online-Job",
-  "short_name": "EthioJobs",
-  "description": "Ethiopia's Premier Freelance Marketplace",
-  "start_url": "/index.html",
+  "short_name": "Ethio-Jobs",
+  "description": "Ethiopia's Premium Freelance Marketplace",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1dbf73",
-  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "logo.png",
+      "src": "ethio-logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "logo.png",
+      "src": "ethio-logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

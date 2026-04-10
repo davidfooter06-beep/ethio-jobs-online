@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethio-Online-Job | Premium Freelance Network</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --primary: #1dbf73; --primary-dark: #19a463; --dark: #0b0e14; --text-dark: #222325; --text-light: #62646a; --bg-gray: #f7f7f7; --white: #ffffff; --danger: #ef4444; --warning: #f59e0b; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        body { background: var(--bg-gray); color: var(--text-dark); overflow-x: hidden; }
+
+        /* HERO & VIDEO BG */
+        .hero-wrap { position: relative; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #000; }
+        .hero-video { position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%; transform: translate(-50%, -50%); z-index: -2; object-fit: cover; filter: brightness(0.4); }
+        .hero-content { z-index: 10; text-align: center; color: var(--white); max-width: 900px; padding: 20px; }
+        .hero-content h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); margin-bottom: 20px; font-weight: 800; line-height: 1.2; text-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+        .hero-content p { font-size: clamp(1.2rem, 3vw, 1.8rem); margin-bottom: 40px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
+
+        /* NAVBAR */
+        header { position: fixed; top: 0; width: 100%; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transition: 0.3s; }
+        header.scrolled { background: var(--white); box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+        header.scrolled .nav-link { color: var(--text-dark); }
+        .logo img { height: 60px; object-fit: contain; cursor: pointer; transition: 0.3s; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .nav-menu { display: flex; align-items: center; gap: 25px; }
+        .nav-link { color: var(--white); font-weight: 700; cursor: pointer; transition: 0.2s; background: none; border: none; font-size: 16px; }
+        .nav-link:hover { color: var(--primary); }
+        .btn-primary { background: var(--primary); color: var(--white); padding: 12px 25px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 15px;}
+        .btn-primary:hover { background: var(--primary-dark); }
+
+        /* AUTH MODAL & LOGIN BACKGROUND IMAGE */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 20px; }
+        .auth-card { background: url('assets/login-bg.jpg') center/cover no-repeat; width: 100%; max-width: 950px; height: 550px; border-radius: 12px; display: flex; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.4); position: relative; }
+        .auth-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(29,191,115,0.95) 0%, rgba(0,0,0,0.8) 100%); z-index: 1; }
+        .auth-content { position: relative; z-index: 2; display: flex; width: 100%; height: 100%; }
+        .auth-left { flex: 1; padding: 50px; display: flex; flex-direction: column; justify-content: center; color: white; }
+        .auth-right { flex: 1; background: var(--white); padding: 50px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        
+        .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; border: 2px solid #e4e5e7; padding: 16px; border-radius: 8px; background: white; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .google-btn:hover { background: #f9f9f9; border-color: #ccc; }
+
+        /* HABESHA ANIMATION */
+        .anim-box { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 130px; margin-bottom: 20px; }
+        .habesha-face { font-size: 70px; transition: 0.3s; display: inline-block; }
+        .habesha-bubble { background: #f0f0f0; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; color: var(--text-dark); margin-top: 5px; position: relative; }
+        .state-typing { transform: scale(1.1) rotate(-5deg); }
+        .state-hide { transform: scale(1.1); }
+        .state-error { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-10px) rotate(-10deg);} 75% {transform: translateX(10px) rotate(10deg);} }
+
+        /* 100% PROFILE WIZARD */
+        .wizard-container { display: none; position: fixed; inset: 0; background: var(--bg-gray); z-index: 3000; overflow-y: auto; padding: 40px 20px; }
+        .wizard-card { background: var(--white); max-width: 800px; margin: 0 auto; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); padding: 40px; }
+        .progress-track { width: 100%; height: 12px; background: #e4e5e7; border-radius: 6px; overflow: hidden; margin: 20px 0 40px; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.5s ease; }
+        .wizard-step { display: none; animation: fadeIn 0.4s; }
+        .wizard-step.active { display: block; }
+        .input-group { margin-bottom: 25px; text-align: left; }
+        .input-group label { display: block; font-weight: 600; margin-bottom: 8px; }
+        .wiz-input { width: 100%; padding: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background: var(--bg-gray); transition: 0.3s; }
+        .wiz-input:focus { border-color: var(--primary); background: var(--white); outline: none; }
+        .wiz-area { min-height: 120px; resize: vertical; }
+
+        /* DASHBOARD & GIGS */
+        .dashboard { display: none; padding: 120px 5% 50px; max-width: 1400px; margin: 0 auto; min-height: 100vh; }
+        .gig-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; margin-top: 30px;}
+        .gig-card { background: var(--white); border: 1px solid #e4e5e7; border-radius: 10px; overflow: hidden; transition: 0.3s; cursor: pointer; display: flex; flex-direction: column; }
+        .gig-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .gig-img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
+        .gig-info { padding: 20px; display: flex; flex-direction: column; flex: 1; }
+        .seller-info { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .seller-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .gig-title { font-size: 16px; line-height: 1.5; margin-bottom: 15px; font-weight: bold; }
+        .gig-footer { border-top: 1px solid #e4e5e7; padding-top: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .gig-price { font-weight: 900; font-size: 18px; }
+
+        /* REAL-TIME CHAT WIDGET */
+        .chat-widget { display: none; position: fixed; bottom: 20px; right: 20px; width: 350px; height: 500px; background: var(--white); border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); z-index: 5000; flex-direction: column; overflow: hidden; border: 1px solid #e4e5e7; }
+        .chat-header { background: var(--primary); color: white; padding: 15px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; font-size: 16px; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #f0f2f5; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
+        .msg.sent { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg.recv { background: white; color: var(--text-dark); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e4e5e7; }
+        .chat-input { display: flex; padding: 15px; background: var(--white); border-top: 1px solid #e4e5e7; }
+        .chat-input input { flex: 1; padding: 12px 15px; border: 1px solid #ccc; border-radius: 25px; outline: none; font-size: 14px; }
+        .chat-input button { background: var(--primary); color: white; border: none; border-radius: 50%; width: 42px; height: 42px; margin-left: 10px; cursor: pointer; font-size: 16px; }
+
+        /* ACTION MODALS */
+        .action-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 4000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal-box { background: var(--white); width: 100%; max-width: 600px; padding: 40px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .close-btn { position: absolute; top: 20px; right: 25px; cursor: pointer; font-size: 28px; color: var(--text-light); }
+        .payment-box { background: #f0fdf4; padding: 25px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed var(--primary); text-align: center; }
+        
+        .chat-btn { background: var(--dark); color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 10px; width: 100%; justify-content: center; margin-top: 10px; font-size: 16px; transition: 0.3s; }
+        .chat-btn:hover { background: #333; }
+
+        @media (max-width: 800px) {
+            .auth-card { flex-direction: column; height: auto; }
+            .auth-left { display: none; } /* Hide large graphic on mobile */
+            .nav-link.hide-mob { display: none; }
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <header id="main-header">
+        <div class="logo">
+            <img src="assets/ethio-logo.png" alt="Ethio-Online" onerror="this.src='https://via.placeholder.com/150x50?text=Ethio-Online'">
+        </div>
+        <div class="nav-menu">
+            <button class="nav-link" onclick="toggleLanguage()">አማርኛ / EN</button>
+            <button class="nav-link hide-mob t-exp" onclick="scrollToDash()">Explore</button>
+            <button class="btn-primary t-log" id="authBtn" onclick="openAuth()">Sign In</button>
+            <div id="userMenu" style="display:none; align-items:center; gap:15px;">
+                <span id="userNameDisplay" class="hide-mob" style="font-weight:bold; color:var(--primary);"></span>
+                <button class="btn-primary t-post" onclick="openPostModal()">Post Gig</button>
+                <button class="nav-link" onclick="logout()" style="color:var(--danger)">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero-wrap" id="hero-section">
+        <video autoplay muted loop playsinline class="hero-video">
+            <source src="assets/bg-video.mp4" type="video/mp4">
+        </video>
+        <div class="hero-content">
+            <h1 class="t-h1">Find the perfect freelance services for your business</h1>
+            <p class="t-p1">Work with the best Ethiopian talent, securely and professionally.</p>
+            <button class="btn-primary" style="padding:15px 40px; font-size:18px;" onclick="openAuth()">Get Started</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="authModal">
+        <div class="auth-card">
+            <div class="auth-overlay"></div>
+            <div class="auth-content">
+                <span class="close-btn" style="color:white; z-index:10;" onclick="closeModal('authModal')">&times;</span>
+                <div class="auth-left">
+                    <h2 class="t-auth-title" style="font-size:40px; margin-bottom:20px; font-weight:800; line-height:1.2;">Success Starts Here.</h2>
+                    <p class="t-auth-sub" style="font-size:18px; line-height:1.6; opacity:0.9;">Join the largest professional network in Ethiopia. Connect with clients, build your portfolio, and grow your income.</p>
+                </div>
+                <div class="auth-right">
+                    <div class="anim-box">
+                        <div class="habesha-face" id="animFace">👨🏾‍🦱</div>
+                        <div class="habesha-bubble" id="animBubble">ሰላም! (Hello!)</div>
+                    </div>
+                    <h2 class="t-welcome" style="margin-bottom:30px; font-size:26px;">Welcome to Ethio-Online</h2>
+                    
+                    <div style="width:100%; text-align:left; margin-bottom:20px;">
+                        <input type="email" class="wiz-input" placeholder="Email" style="margin-bottom:15px;" onfocus="botAnim('typing')" onblur="botAnim('idle')">
+                        <input type="password" class="wiz-input" placeholder="Password" onfocus="botAnim('hide')" onblur="botAnim('idle')">
+                    </div>
+
+                    <button class="google-btn" onclick="signInWithGoogle()">
+                        <img src="assets/google-logo.png" width="24" alt="G" onerror="this.style.display='none'"> 
+                        <span class="t-goog">Continue with Google</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="wizard-container" id="profileWizard">
+        <div class="wizard-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 class="t-wiz-title">Complete Your Profile</h2>
+                <span id="prof-percent" style="font-weight:900; color:var(--primary); font-size:28px;">0%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="wiz-prog"></div></div>
+
+            <div class="wizard-step active" id="step1">
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="w-name" class="wiz-input" placeholder="e.g. Abebe Kebede" oninput="updateProg()">
+                </div>
+                <div class="input-group">
+                    <label>Account Type (Crucial for Pricing)</label>
+                    <select id="w-type" class="wiz-input" onchange="updateProg()">
+                        <option value="">Select an option...</option>
+                        <option value="seeker">Job Seeker (Free up to 5 jobs)</option>
+                        <option value="individual">Individual Client / Hiring</option>
+                        <option value="company">Company / Agency</option>
+                    </select>
+                </div>
+                <button class="btn-primary" style="width:100%; padding:15px;" onclick="nextStep(2)">Next Step</button>
+            </div>
+
+            <div class="wizard-step" id="step2">
+                <div class="input-group">
+                    <label>Professional Title</label>
+                    <input type="text" id="w-title" class="wiz-input" placeholder="e.g. Senior Frontend Developer" oninput="updateProg()">
+                </div>
+                <div class="input-group">
+                    <label>Telegram Username (Optional)</label>
+                    <input type="text" id="w-telegram" class="wiz-input" placeholder="@Abebe123" oninput="updateProg()">
+                </div>
+                <div class="input-group">
+                    <label>Profile Avatar</label>
+                    <input type="file" id="w-avatar" class="wiz-input" accept="image/*" onchange="updateProg()">
+                </div>
+                <div style="display:flex; gap:15px;">
+                    <button class="btn-primary" style="background:#ccc; color:#333; flex:1;" onclick="nextStep(1)">Back</button>
+                    <button class="btn-primary" id="btn-finish" style="flex:2;" onclick="finishProfile()" disabled>Complete Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="dashboard" id="mainDashboard">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e4e5e7; padding-bottom:20px;">
+            <h2 class="t-dash-title" style="font-size:28px;">Explore Live Gigs</h2>
+            <button class="btn-primary" onclick="loadGigs()">↻ Refresh</button>
+        </div>
+        <div class="gig-grid" id="gigList"></div>
+    </main>
+
+    <div class="action-modal" id="postGigModal">
+        <div class="modal-box">
+            <span class="close-btn" onclick="closeModal('postGigModal')">&times;</span>
+            <h2 class="t-post-gig" style="margin-bottom:25px;">Create a New Gig</h2>
+            <div class="input-group"><label>Gig Title</label><input type="text" id="g-title" class="wiz-input" placeholder="I will build..."></div>
+            <div class="input-group"><label>Description</label><textarea id="g-desc" class="wiz-input wiz-area"></textarea></div>
+            <div class="input-group"><label>Price (ETB)</label><input type="number" id="g-price" class="wiz-input"></div>
+            <div class="input-group"><label>Portfolio Image</label><input type="file" id="g-image" class="wiz-input" accept="image/*"></div>
+            
+            <div class="payment-box" id="payBox" style="display:none;">
+                <p style="font-weight:900; color:var(--danger); font-size:22px; margin-bottom:10px;">Fee: <span id="feeDisplay">0</span> ETB</p>
+                <p>Transfer to Admin: <strong id="adminTbName">...</strong> / <strong id="adminTbPhone">...</strong></p>
+                <img src="assets/telebirr-logo.png" height="40" style="margin-top:15px;" onerror="this.style.display='none'">
+                <div class="input-group" style="margin-top:20px; text-align:left;"><label>Telebirr Ref No.</label><input type="text" id="g-ref" class="wiz-input"></div>
+            </div>
+
+            <button class="btn-primary" style="width:100%; padding:15px; font-size:16px;" onclick="submitGig()">Submit for Approval</button>
+        </div>
+    </div>
+
+    <div class="action-modal" id="viewGigModal">
+        <div class="modal-box">
+            <span class="close-btn" onclick="closeModal('viewGigModal')">&times;</span>
+            <img id="v-img" style="width:100%; height:280px; object-fit:cover; border-radius:8px; margin-bottom:20px;">
+            <h2 id="v-title" style="font-size:24px;">...</h2>
+            <p id="v-desc" style="margin:20px 0; color:var(--text-light); line-height:1.6;"></p>
+            <h3 style="color:var(--primary); margin-bottom:25px; font-size:22px;">Price: <span id="v-price"></span> ETB</h3>
+            <button class="chat-btn" id="v-chat-btn">💬 Chat with Seller (Real-Time)</button>
+        </div>
+    </div>
+
+    <div class="chat-widget" id="chatWidget">
+        <div class="chat-header">
+            <span id="chatName">Chat</span>
+            <button style="background:none; border:none; color:white; font-size:22px; cursor:pointer;" onclick="closeChat()">&times;</button>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="chat-input">
+            <input type="text" id="chatMsg" placeholder="Type a message...">
+            <button onclick="sendMsg()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxmQDA0gjmG9IAjcvszQcRbYlcB1EdA7k",
+            authDomain: "ethio-jobs-online.firebaseapp.com",
+            databaseURL: "https://ethio-jobs-online-default-rtdb.firebaseio.com",
+            projectId: "ethio-jobs-online",
+            storageBucket: "ethio-jobs-online.firebasestorage.app",
+            messagingSenderId: "706946724029",
+            appId: "1:706946724029:web:77595803c7031c0dee07d4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let currentUser = null; let userProfile = null; let sysSettings = {};
+        let activeChatId = null; let activeReceiverId = null;
+
+        // ANIMATION & LANG
+        function botAnim(state) {
+            const f = document.getElementById('animFace'), b = document.getElementById('animBubble');
+            if(state==='typing') { f.innerText="👀"; f.className="habesha-face state-typing"; b.innerText=isAmharic?"እየፃፍክ ነው...":"Typing...";}
+            else if(state==='hide') { f.innerText="🙈"; f.className="habesha-face state-hide"; b.innerText=isAmharic?"አላይም!":"Not looking!";}
+            else if(state==='error') { f.innerText="🤦🏾‍♂️"; f.className="habesha-face state-error"; b.innerText=isAmharic?"ተሳስተሃል!":"Error!";}
+            else { f.innerText="👨🏾‍🦱"; f.className="habesha-face"; b.innerText=isAmharic?"ሰላም!":"Hello!";}
+        }
+
+        let isAmharic = false;
+        const dict = {
+            "t-exp": ["Explore", "ዳስስ"], "t-log": ["Sign In", "ይግቡ"], "t-post": ["Post Gig", "ስራ ይለጥፉ"],
+            "t-h1": ["Find the perfect freelance services for your business", "ለንግድዎ ትክክለኛውን የፍሪላንስ አገልግሎት ያግኙ"],
+            "t-p1": ["Work with the best Ethiopian talent, securely and professionally.", "ከምርጥ የኢትዮጵያ ባለሙያዎች ጋር ይስሩ።"],
+            "t-auth-title": ["Success Starts Here.", "ስኬት እዚህ ይጀምራል"], "t-welcome": ["Welcome to Ethio-Online", "እንኳን ደህና መጡ"],
+            "t-goog": ["Continue with Google", "በ Google ይቀጥሉ"], "t-dash-title": ["Explore Live Gigs", "ስራዎችን ያስሱ"]
+        };
+        function toggleLanguage() {
+            isAmharic = !isAmharic; const idx = isAmharic ? 1 : 0;
+            for(const k in dict) { document.querySelectorAll('.'+k).forEach(e => e.innerText = dict[k][idx]); }
+            botAnim('idle');
+        }
+
+        // UI HELPERS
+        function openAuth() { document.getElementById('authModal').style.display='flex'; botAnim('idle'); }
+        function closeModal(id) { document.getElementById(id).style.display='none'; }
+        function scrollToDash() { document.getElementById('mainDashboard').scrollIntoView({behavior:'smooth'}); }
+
+        // AUTHENTICATION
+        function signInWithGoogle() {
+            auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(res => checkUser(res.user))
+            .catch(err => { botAnim('error'); Swal.fire('Error', err.message, 'error'); });
+        }
+        function logout() { auth.signOut().then(() => location.reload()); }
+
+        auth.onAuthStateChanged(user => {
+            if(user) { currentUser = user; checkUser(user); }
+            else { document.getElementById('authBtn').style.display='block'; document.getElementById('userMenu').style.display='none'; }
+        });
+
+        function checkUser(user) {
+            db.ref('users/'+user.uid).once('value', snap => {
+                const d = snap.val();
+                if(d && d.banned) { Swal.fire('Banned', 'Account restricted by Admin.', 'error'); auth.signOut(); return; }
+                if(d && d.profile_completed === 100) {
+                    userProfile = d; closeModal('authModal');
+                    document.getElementById('authBtn').style.display='none';
+                    document.getElementById('userMenu').style.display='flex';
+                    document.getElementById('userNameDisplay').innerText = d.name;
+                    document.getElementById('hero-section').style.display='none';
+                    document.getElementById('mainDashboard').style.display='block';
+                    document.getElementById('main-header').classList.add('scrolled');
+                    loadGigs(); listenNotifications();
+                } else {
+                    closeModal('authModal'); document.getElementById('hero-section').style.display='none';
+                    document.getElementById('profileWizard').style.display='block';
+                }
+            });
+        }
+
+        // PROFILE WIZARD
+        function nextStep(s) { document.querySelectorAll('.wizard-step').forEach(e=>e.classList.remove('active')); document.getElementById('step'+s).classList.add('active'); }
+        function updateProg() {
+            const f = ['w-name','w-type','w-title','w-avatar']; let c = 0;
+            f.forEach(id => { if(document.getElementById(id).value) c++; });
+            const p = Math.round((c/4)*100);
+            document.getElementById('prof-percent').innerText = p+'%'; document.getElementById('wiz-prog').style.width = p+'%';
+            document.getElementById('btn-finish').disabled = p!==100;
+            document.getElementById('btn-finish').style.background = p===100 ? 'var(--primary)' : '#ccc';
+        }
+        function finishProfile() {
+            const file = document.getElementById('w-avatar').files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const data = { name: document.getElementById('w-name').value, type: document.getElementById('w-type').value, title: document.getElementById('w-title').value, telegram: document.getElementById('w-telegram').value, avatar: e.target.result, profile_completed: 100, posts_count: 0, banned: false };
+                db.ref('users/'+currentUser.uid).set(data).then(() => location.reload());
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // POSTING GIGS
+        db.ref('settings').on('value', snap => {
+            if(snap.exists()) {
+                sysSettings = snap.val();
+                document.getElementById('adminTbName').innerText = sysSettings.adminName || "Admin";
+                document.getElementById('adminTbPhone').innerText = sysSettings.adminPhone || "Phone";
+            }
+        });
+
+        function openPostModal() {
+            let fee = 0;
+            if(userProfile.type === 'company') fee = sysSettings.feeComp || 500;
+            else if(userProfile.type === 'individual') fee = sysSettings.feeInd || 150;
+            else if(userProfile.type === 'seeker' && userProfile.posts_count >= 5) fee = sysSettings.feeSeeker || 50;
+
+            const box = document.getElementById('payBox');
+            if(fee > 0) { box.style.display='block'; document.getElementById('feeDisplay').innerText = fee; }
+            else { box.style.display='none'; document.getElementById('feeDisplay').innerText = '0'; }
+            document.getElementById('postGigModal').style.display='flex';
+        }
+
+        function submitGig() {
+            const t=document.getElementById('g-title').value, d=document.getElementById('g-desc').value, p=document.getElementById('g-price').value, f=document.getElementById('g-image').files[0], r=document.getElementById('g-ref').value;
+            const fee = parseInt(document.getElementById('feeDisplay').innerText);
+            if(!t || !p || !f) return Swal.fire('Error', 'Missing details', 'warning');
+            if(fee > 0 && !r) return Swal.fire('Payment', 'Ref ID required', 'error');
+
+            Swal.fire({title:'Processing...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+            const reader = new FileReader();
+            reader.onload = e => {
+                db.ref('pending_gigs').push({ authorId: currentUser.uid, authorName: userProfile.name, title: t, desc: d, price: p, image: e.target.result, refId: r||'FREE', timestamp: Date.now() })
+                .then(() => {
+                    userProfile.posts_count++; db.ref('users/'+currentUser.uid).update({posts_count: userProfile.posts_count});
+                    closeModal('postGigModal'); Swal.fire('Sent', fee>0?'Admin will verify payment':'Sent for approval', 'success');
+                });
+            };
+            reader.readAsDataURL(f);
+        }
+
+        // LOAD PUBLIC GIGS (MATCHES RULES)
+        function loadGigs() {
+            db.ref('public_gigs').on('value', snap => {
+                const grid = document.getElementById('gigList'); grid.innerHTML = '';
+                if(!snap.exists()) return grid.innerHTML = '<p>No gigs yet.</p>';
+                snap.forEach(child => {
+                    const gig = child.val();
+                    db.ref('users/'+gig.authorId).once('value').then(uSnap => {
+                        const seller = uSnap.val(); if(!seller) return;
+                        grid.innerHTML += `
+                            <div class="gig-card" onclick="openGigView('${child.key}')">
+                                <img src="${gig.image}" class="gig-img">
+                                <div class="gig-info">
+                                    <div class="seller-info"><img src="${seller.avatar}" class="seller-avatar"><strong>${seller.name}</strong><span style="color:var(--warning); margin-left:auto;">★ 5.0</span></div>
+                                    <div class="gig-title">${gig.title}</div>
+                                    <div class="gig-footer"><div class="gig-price">ETB ${gig.price}</div></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+            });
+        }
+
+        window.openGigView = (gigId) => {
+            db.ref('public_gigs/'+gigId).once('value').then(snap => {
+                const gig = snap.val();
+                document.getElementById('v-title').innerText = gig.title; document.getElementById('v-desc').innerText = gig.desc;
+                document.getElementById('v-price').innerText = gig.price; document.getElementById('v-img').src = gig.image;
+                
+                const btn = document.getElementById('v-chat-btn');
+                if(gig.authorId === currentUser.uid) { btn.style.display='none'; }
+                else { btn.style.display='flex'; btn.onclick = () => initChat(gig.authorId, gig.authorName); }
+                
+                document.getElementById('viewGigModal').style.display='flex';
+            });
+        };
+
+        // REAL-TIME P2P CHAT
+        function initChat(targetUid, targetName) {
+            closeModal('viewGigModal');
+            document.getElementById('chatWidget').style.display = 'flex';
+            document.getElementById('chatName').innerText = targetName;
+            activeReceiverId = targetUid;
+            
+            // Unique alphabetical ID
+            activeChatId = currentUser.uid < targetUid ? `${currentUser.uid}_${targetUid}` : `${targetUid}_${currentUser.uid}`;
+            
+            db.ref('chats/'+activeChatId).on('value', snap => {
+                const box = document.getElementById('chatBody'); box.innerHTML = '';
+                if(snap.exists()) {
+                    snap.forEach(mSnap => {
+                        const m = mSnap.val();
+                        const isMe = m.sender === currentUser.uid;
+                        box.innerHTML += `<div class="msg ${isMe?'sent':'recv'}">${m.text}</div>`;
+                    });
+                    box.scrollTop = box.scrollHeight;
+                }
+            });
+        }
+
+        function closeChat() { document.getElementById('chatWidget').style.display = 'none'; activeChatId = null; }
+
+        function sendMsg() {
+            const input = document.getElementById('chatMsg'); const txt = input.value.trim();
+            if(!txt || !activeChatId) return;
+            db.ref('chats/'+activeChatId).push({ sender: currentUser.uid, text: txt, time: Date.now() }).then(() => {
+                input.value = '';
+                // Notify receiver
+                db.ref('notifications/'+activeReceiverId).push({ text: `New message from ${userProfile.name}`, type: 'info', read: false });
+            });
+        }
+
+        function listenNotifications() {
+            db.ref('notifications/'+currentUser.uid).on('value', snap => {
+                if(snap.exists()) snap.forEach(child => {
+                    const n = child.val();
+                    if(!n.read) {
+                        Swal.fire('Notification', n.text, n.type);
+                        db.ref(`notifications/${currentUser.uid}/${child.key}`).update({read:true});
+                    }
+                });
+            });
+        }
+
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 50) header.classList.add('scrolled'); else header.classList.remove('scrolled');
+        });
+    </script>
+</body>
+</html>
